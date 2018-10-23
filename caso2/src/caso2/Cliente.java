@@ -19,9 +19,14 @@ public class Cliente extends Thread{
 	BufferedReader lector = null;
 
 
-	public void start()
+	public static void main(String[] args)
 	{
-		try {
+
+		boolean ejecutar = true;
+		Socket sock = null;
+		PrintWriter escritor = null;
+		BufferedReader lector = null;
+		try{
 			sock = new Socket(HOST, PUERTO);
 			escritor = new PrintWriter(sock.getOutputStream(), true);
 			lector = new BufferedReader(new InputStreamReader(sock.getInputStream()));
@@ -29,21 +34,77 @@ public class Cliente extends Thread{
 
 			BufferedReader stdIn = new BufferedReader(
 					new InputStreamReader(System.in));
-			String fromServer;
+			String respuestaServer;
 			String fromUser;
+			int estado = 0;
+
 			while (ejecutar) {
-				
-				System.out.print("Escriba el mensaje para enviar:");
-				fromUser = stdIn.readLine();
-				if (fromUser != null && !fromUser.equals("-1")) {
-					System.out.println("Cliente: " + fromUser);
-					if (fromUser.equalsIgnoreCase("OK"))
+
+
+
+				//respuestaServer = lector.readLine(); 
+
+
+				if (estado == 0) {
+
+					System.out.print("Escriba el mensaje para enviar:");
+					fromUser = stdIn.readLine();
+
+					if(fromUser.equals("HOLA")){
+						escritor.println(fromUser);
+					}else{
+						System.out.println("No va de acuerdo con el protocolo");
 						ejecutar = false;
-					escritor.println(fromUser);
+					}
+
+
+					estado++; 
+
+				}else if(estado == 1 )
+				{
+					respuestaServer = lector.readLine(); 
+					if(respuestaServer.equalsIgnoreCase("OK"))
+					{
+						System.out.println("OK");
+						
+						System.out.print("Escriba el mensaje para enviar:");
+						
+						//Aqui mandar: ALGORITMOS:AES:RSA:HMACSHA1
+						
+						fromUser = stdIn.readLine();
+						escritor.println(fromUser);
+						
+						
+						
+						estado++; 
+					}else 
+					{
+						System.out.println(respuestaServer);
+						ejecutar = false;
+					}
+
+
+				}else if(estado == 2)
+				{
+					//Aqui mand
+					respuestaServer = lector.readLine(); 
+					if(respuestaServer.equalsIgnoreCase("OK"))
+					{
+
+						
+					}else
+					{
+						ejecutar= false;
+					}
+					System.out.println(respuestaServer);
+
+				}else if (estado == 3)
+				{
+
 				}
-				if ((fromServer = lector.readLine()) != null) {
-					System.out.println("Servidor: " + fromServer);
-				}
+
+
+
 			}
 			escritor.close();
 			lector.close();
