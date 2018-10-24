@@ -52,6 +52,8 @@ public class Encriptar {
 	private PrivateKey llavePrivadaCliente; 
 	private PublicKey llavePublicaCliente; 
 
+	
+	private Key llaveSimetrica;
 
 	private X509Certificate certificado;
 
@@ -90,6 +92,8 @@ public class Encriptar {
 		return new String(hexChars);
 	}
 
+	
+	
 
 	public X509Certificate getCertificado(KeyPair llaves) throws CertificateEncodingException, InvalidKeyException, IllegalStateException, NoSuchAlgorithmException, SignatureException 
 	{
@@ -150,7 +154,7 @@ public class Encriptar {
 
 
 
-	public Key encriptarLlaveServer(byte[] bytes) throws InvalidKeySpecException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException {
+	public byte[] encriptarLlaveServer(byte[] bytes) throws InvalidKeySpecException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException {
 
 
 		
@@ -163,9 +167,9 @@ public class Encriptar {
 		//Descriptar la que me llegó
 		
 		cipher.init(Cipher.DECRYPT_MODE, llavePublicaCliente);
-		System.out.println("eNTRA4");
+		System.out.println("En Desencriptar y encriptarLlaveServer: 1 ");
 		byte[] llaveD = cipher.doFinal(bytes);
-		System.out.println("eNTRA5");
+		System.out.println("En Desencriptar y encriptarLlaveServer: 2");
 		//encriptarla con la del servidor
 		cipher.init(Cipher.ENCRYPT_MODE, llavePublicaServidor);
 		
@@ -173,13 +177,10 @@ public class Encriptar {
 		byte[] llaveE = cipher.doFinal(llaveD);
 		
 
-		X509EncodedKeySpec pubKeySpec = new X509EncodedKeySpec(llaveE);
 
 		
-		PublicKey key =  factoria.generatePublic(pubKeySpec);
-		
 
-		return key; 
+		return llaveE; 
 	}
 
 	public X509Certificate setCertificadoServer(byte[] cerByte)

@@ -29,8 +29,8 @@ public class Cliente extends Thread{
 		Socket sock = null;
 		PrintWriter escritor = null;
 		BufferedReader lector = null;
-		
-		
+
+
 		Encriptar encrip = new Encriptar(); 
 		try{
 			sock = new Socket(HOST, PUERTO);
@@ -72,16 +72,16 @@ public class Cliente extends Thread{
 					if(respuestaServer.equalsIgnoreCase("OK"))
 					{
 						System.out.println("OK");
-						
+
 						System.out.print("Escriba el mensaje para enviar:");
-						
+
 						//Aqui mandar: ALGORITMOS:Blowfish:RSA:HMACMD5
-						
+
 						fromUser = stdIn.readLine();
 						escritor.println(fromUser);
-						
-						
-						
+
+
+
 						estado++; 
 					}else 
 					{
@@ -97,71 +97,94 @@ public class Cliente extends Thread{
 					System.out.println(respuestaServer);
 					if(respuestaServer.equalsIgnoreCase("OK"))
 					{
-						
-						
+
+
 						X509Certificate certificado = encrip.getCertificado(encrip.getKeyPair());
 						byte[] certificadoEnBytes = certificado.getEncoded( );
 						String certificadoEnString = Encriptar.bytesToHex(certificadoEnBytes);
-						
+
 						escritor.println(certificadoEnString);
 						estado++;
-						
+
 					}else
 					{
 						ejecutar= false;
 					}
-					
+
 
 				}else if (estado == 3)
 				{
 					respuestaServer = lector.readLine(); 
 					System.out.println(respuestaServer);
-					
+
 					
 					if(respuestaServer.equalsIgnoreCase("OK"))
 					{
 						respuestaServer = lector.readLine(); 
-						
+						//recibe el certificado del servidor
 						byte[] certificadoByte = DatatypeConverter.parseHexBinary(respuestaServer); 
 						X509Certificate certificadoServer =  encrip.setCertificadoServer(certificadoByte);
+
+						try{
+						certificadoServer.checkValidity();
+						}catch (Exception e) {
+							escritor.println("ERROR");
+							e.printStackTrace();
+						}
 						
 						escritor.println("OK");
-						
+
 						estado++;
-						
+
 					}else
 					{
 						ejecutar= false;
 					}
-				
+
 
 				}else if(estado == 4)
 				{
+
+					respuestaServer = lector.readLine(); 
+
+					byte[] llaveByte = DatatypeConverter.parseHexBinary(respuestaServer);
+
+
+
+					//Mandar la llave encriptada 
+					escritor.write(DatatypeConverter.printHexBinary(encrip.encriptarLlaveServer(llaveByte))); 	
+
+					estado++;
+
+				}else if(estado == 5)
+				{
 					
 					respuestaServer = lector.readLine(); 
+					System.out.println(respuestaServer);
 					
-					byte[] llaveByte = DatatypeConverter.parseHexBinary(respuestaServer);
-					
-					encrip.encriptarLlaveServer(llaveByte); 	
-					
-					
-					
-					
-					
+					if(respuestaServer.equalsIgnoreCase("OK"))
+					{
+						
+						
+
+					}else
+					{
+						
+						ejecutar = false; 
+					}
+
 				}
-
-
-
+				escritor.close();
+				lector.close();
+				// cierre el socket y la entrada estándar
+				stdIn.close();
+				sock.close();
 			}
-			escritor.close();
-			lector.close();
-			// cierre el socket y la entrada estándar
-			stdIn.close();
-			sock.close();
 		} catch (Exception e) {
 			System.err.println("Exception: " + e.getMessage());
 			System.exit(1);
 		}
+
 	}
 }
 
