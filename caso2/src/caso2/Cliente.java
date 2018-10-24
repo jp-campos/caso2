@@ -5,6 +5,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.security.cert.X509Certificate;
+
+import javax.xml.bind.DatatypeConverter;
 
 public class Cliente extends Thread{
 
@@ -26,6 +29,9 @@ public class Cliente extends Thread{
 		Socket sock = null;
 		PrintWriter escritor = null;
 		BufferedReader lector = null;
+		
+		
+		Encriptar encrip = new Encriptar(); 
 		try{
 			sock = new Socket(HOST, PUERTO);
 			escritor = new PrintWriter(sock.getOutputStream(), true);
@@ -69,7 +75,7 @@ public class Cliente extends Thread{
 						
 						System.out.print("Escriba el mensaje para enviar:");
 						
-						//Aqui mandar: ALGORITMOS:AES:RSA:HMACSHA1
+						//Aqui mandar: ALGORITMOS:Blowfish:RSA:HMACMD5
 						
 						fromUser = stdIn.readLine();
 						escritor.println(fromUser);
@@ -86,21 +92,62 @@ public class Cliente extends Thread{
 
 				}else if(estado == 2)
 				{
-					//Aqui mand
+					//Aqui mandar certificado
 					respuestaServer = lector.readLine(); 
+					System.out.println(respuestaServer);
 					if(respuestaServer.equalsIgnoreCase("OK"))
 					{
-
+						
+						
+						X509Certificate certificado = encrip.getCertificado(encrip.getKeyPair());
+						byte[] certificadoEnBytes = certificado.getEncoded( );
+						String certificadoEnString = Encriptar.bytesToHex(certificadoEnBytes);
+						
+						escritor.println(certificadoEnString);
+						estado++;
 						
 					}else
 					{
 						ejecutar= false;
 					}
-					System.out.println(respuestaServer);
+					
 
 				}else if (estado == 3)
 				{
+					respuestaServer = lector.readLine(); 
+					System.out.println(respuestaServer);
+					
+					
+					if(respuestaServer.equalsIgnoreCase("OK"))
+					{
+						respuestaServer = lector.readLine(); 
+						
+						byte[] certificadoByte = DatatypeConverter.parseHexBinary(respuestaServer); 
+						X509Certificate certificadoServer =  encrip.setCertificadoServer(certificadoByte);
+						
+						escritor.println("OK");
+						
+						estado++;
+						
+					}else
+					{
+						ejecutar= false;
+					}
+				
 
+				}else if(estado == 4)
+				{
+					
+					respuestaServer = lector.readLine(); 
+					
+					byte[] llaveByte = DatatypeConverter.parseHexBinary(respuestaServer);
+					
+					encrip.encriptarLlaveServer(llaveByte); 	
+					
+					
+					
+					
+					
 				}
 
 
