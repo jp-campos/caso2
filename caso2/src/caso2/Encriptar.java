@@ -158,10 +158,9 @@ public class Encriptar {
 
 
 		
-		Cipher cipher = Cipher.getInstance("RSA");
+		Cipher cipher = Cipher.getInstance("AES/RSA/HMACMD5");
 		
 
-		KeyFactory factoria = KeyFactory.getInstance("RSA");
 
 		
 		//Descriptar la que me llegó
