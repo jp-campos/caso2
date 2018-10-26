@@ -5,6 +5,8 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.security.cert.X509Certificate;
+
+import javax.crypto.Mac;
 import javax.xml.bind.DatatypeConverter;
 public class Cliente extends Thread{
 	private static final String HOST = "127.0.0.1";
@@ -13,7 +15,7 @@ public class Cliente extends Thread{
 	Socket sock = null;
 	PrintWriter escritor = null;
 	BufferedReader lector = null;
-	public static void main(String[] args)
+	public static void main(String[] args) throws Exception
 	{
 		boolean ejecutar = true;
 		Socket sock = null;
@@ -52,9 +54,13 @@ public class Cliente extends Thread{
 
 						System.out.print("Escriba el mensaje para enviar:");
 
-						//Aqui mandar: ALGORITMOS:Blowfish:RSA:HMACMD5
-
+						//Aqui mandar:ALGORITMOS:Blowfish:RSA:HMACMD5
+						
+						
 						fromUser = stdIn.readLine();
+						
+						encrip.setAlgoritmos(fromUser);
+						
 						escritor.println(fromUser);
 
 
@@ -90,6 +96,8 @@ public class Cliente extends Thread{
 
 				}else if (estado == 3)
 				{
+					//RECIBIR CERTIFICADO
+					
 					respuestaServer = lector.readLine(); 
 					System.out.println(respuestaServer);
 
@@ -100,7 +108,7 @@ public class Cliente extends Thread{
 
 						byte[] certificadoByte = DatatypeConverter.parseHexBinary(respuestaServer); 
 						X509Certificate certificadoServer =  encrip.setCertificadoServer(certificadoByte);
-
+					
 						try{
 							certificadoServer.checkValidity();
 						}catch (Exception e) {
@@ -118,19 +126,22 @@ public class Cliente extends Thread{
 
 				}else if(estado == 4)
 				{
-
+					//Devolver la llave
 					respuestaServer = lector.readLine(); 
 
 					byte[] llaveByte = DatatypeConverter.parseHexBinary(respuestaServer);
 
-					encrip.encriptarLlaveServer(llaveByte); 	
+					
+					byte[] llaveByteRespuesta = encrip.encriptarLlaveSimetrica(llaveByte); 	
+					String llaveStringRespuesta = Encriptar.bytesToHex(llaveByteRespuesta);
+					escritor.println(llaveStringRespuesta);
 
-
-
-
+					estado++; 
 
 				}else if(estado == 5)
 				{
+					respuestaServer = lector.readLine(); 
+					System.out.println(respuestaServer);
 
 
 				}

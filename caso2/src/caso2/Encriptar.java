@@ -12,6 +12,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.Security;
 import java.security.SignatureException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
@@ -27,6 +28,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
 
 import org.bouncycastle.asn1.x500.X500NameBuilder;
@@ -60,6 +62,11 @@ public class Encriptar {
 	private X509Certificate	 certificadoServer; 
 
 
+	private String algoSimetrico;
+	private String algoAsimetrico; 
+	private String algoHmac; 
+	
+	
 	public Encriptar()
 	{
 		KeyPairGenerator generador = null;
@@ -71,6 +78,9 @@ public class Encriptar {
 			e.printStackTrace();
 		} 
 
+		
+		generador.initialize(1024);
+		
 		parLlaves = generador.generateKeyPair(); 
 
 		llavePublicaCliente = parLlaves.getPublic(); 
@@ -102,15 +112,16 @@ public class Encriptar {
 
 		
 
-		PrivateKey privada = llaves.getPrivate(); 
-		PublicKey publica = llaves.getPublic(); 
 
 
-		String algoritmoPrivada = privada.getAlgorithm(); 
-		String algoritmoPublica = publica.getAlgorithm(); 
+		String algoritmoPrivada = llavePrivadaCliente.getAlgorithm(); 
+		String algoritmoPublica = llavePublicaCliente.getAlgorithm(); 
 
+		
+		System.out.println("Algoritmo privada: "+ algoritmoPrivada);
+		System.out.println("Algoritmo publica: " + algoritmoPublica);
 		String nombre = "Certificado"; 
-		BigInteger bigInt = new BigInteger(publica.getEncoded().length, new SecureRandom()); 
+		BigInteger bigInt = new BigInteger(llavePublicaCliente.getEncoded().length, new SecureRandom()); 
 
 		Date notBefore = new Date(System.currentTimeMillis()); 
 
@@ -123,7 +134,7 @@ public class Encriptar {
 
 
 		X509V3CertificateGenerator generador =  new X509V3CertificateGenerator(); 
-		generador.setPublicKey(publica);
+		generador.setPublicKey(llavePublicaCliente);
 		generador.setNotAfter(notAfter);
 		generador.setNotBefore(notBefore);
 
@@ -134,7 +145,7 @@ public class Encriptar {
 
 
 
-		certificado = generador.generate(privada); 
+		certificado = generador.generate(llavePrivadaCliente); 
 
 
 		return certificado; 
@@ -153,22 +164,55 @@ public class Encriptar {
 	}
 
 
-
-	public byte[] encriptarLlaveServer(byte[] bytes) throws InvalidKeySpecException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException {
-
-
+	
+	public void setAlgoritmos(String algos)
+	{
 		
-		Cipher cipher = Cipher.getInstance("AES/RSA/HMACMD5");
+		String[] partes = algos.split(":");
 		
+		algoSimetrico = partes[1]; 
+		algoAsimetrico = partes[2];
+		algoHmac = partes[3];
+		
+		
+		
+	}
+
+	public byte[] encriptarLlaveSimetrica(byte[] bytes) throws InvalidKeySpecException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException {
 
 
+		String arg1 = null, arg2 = null, arg3 = null; 
+		Cipher cipher = null;
+		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 		
+		if(algoSimetrico.equals("AES"))
+		{
+			arg1 = "AES";
+			arg2 = "ECB";
+			arg3 = "PKCS5Padding";
+			
+			cipher = Cipher.getInstance(arg1 + "/" + arg2 + "/" + arg3);
+		}else if(algoSimetrico.equals("Blowfish"))
+		{
+			cipher = Cipher.getInstance("RSA");
+		}	
+		
+		
+		
+		
+		
+		SecretKeySpec k = new SecretKeySpec(bytes, algoSimetrico);
+		
+		System.out.println("En Desencriptar y encriptarLlaveServer: 1 ");
+		
+	
 		//Descriptar la que me llegó
 		
-		cipher.init(Cipher.DECRYPT_MODE, llavePublicaCliente);
-		System.out.println("En Desencriptar y encriptarLlaveServer: 1 ");
+		cipher.init(Cipher.DECRYPT_MODE, llavePrivadaCliente);
+		 
+		System.out.println("En Desencriptar y encriptarLlaveServer: 2 ");
 		byte[] llaveD = cipher.doFinal(bytes);
-		System.out.println("En Desencriptar y encriptarLlaveServer: 2");
+		System.out.println("En Desencriptar y encriptarLlaveServer: 3");
 		//encriptarla con la del servidor
 		cipher.init(Cipher.ENCRYPT_MODE, llavePublicaServidor);
 		
