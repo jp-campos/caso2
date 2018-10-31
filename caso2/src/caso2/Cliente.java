@@ -4,35 +4,75 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.security.cert.X509Certificate;
 
 import javax.crypto.Mac;
 import javax.xml.bind.DatatypeConverter;
 public class Cliente extends Thread{
+
 	private static final String HOST = "127.0.0.1";
 	public static final int PUERTO = 8080;
-	boolean ejecutar = true;
-	Socket sock = null;
-	PrintWriter escritor = null;
-	BufferedReader lector = null;
-	public static void main(String[] args) throws Exception
+
+	private boolean ejecutar = true;
+	private Socket sock = null;
+	private PrintWriter escritor = null;
+	private BufferedReader lector = null;
+	private Encriptar encrip; 
+	private BufferedReader stdIn = null;
+	
+	private Monitor monitor;
+
+
+
+	public Cliente(String seguridad) throws UnknownHostException, IOException
 	{
-		boolean ejecutar = true;
-		Socket sock = null;
-		PrintWriter escritor = null;
-		BufferedReader lector = null;
+		encrip = new Encriptar(); 
+		sock = new Socket(HOST, PUERTO);
+		escritor = new PrintWriter(sock.getOutputStream(), true);
+		lector = new BufferedReader(new InputStreamReader(sock.getInputStream()));
+		BufferedReader stdIn = new BufferedReader(
+				new InputStreamReader(System.in));
+		
+		monitor = new Monitor(); 
+		
+		int estado = 0; 
+		while(ejecutar)
+		{
+
+			if(estado == 0)
+			{
+
+				System.out.println("Escriba NOSEGURO si quiere comunicarse con un servidor sin seguridad \n SEGURO si desea hacerlo con seguridad");
+
+				String respuesta = stdIn.readLine(); 
+
+				if(respuesta.equals("NOSEGURO"))
+				{
+					protocoloSinSeguridad(); 
+					
+				}else if(respuesta.equals("SEGURO"))
+				{
+					protocoloConSeguridad();
+				}
+
+			}else if (estado == 1)
+			{
+
+			}
 
 
-		Encriptar encrip = new Encriptar(); 
+		}
+	}
+
+	public void protocoloConSeguridad()
+	{
+		String respuestaServer;
+		String fromUser;
+		int estado = 0;
+
+
 		try{
-			sock = new Socket(HOST, PUERTO);
-			escritor = new PrintWriter(sock.getOutputStream(), true);
-			lector = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-			BufferedReader stdIn = new BufferedReader(
-					new InputStreamReader(System.in));
-			String respuestaServer;
-			String fromUser;
-			int estado = 0;
 			while (ejecutar) {
 				//respuestaServer = lector.readLine(); 
 				if (estado == 0) {
@@ -55,12 +95,12 @@ public class Cliente extends Thread{
 						System.out.print("Escriba el mensaje para enviar:");
 
 						//Aqui mandar:ALGORITMOS:Blowfish:RSA:HMACMD5
-						
-						
+
+
 						fromUser = stdIn.readLine();
-						
+
 						encrip.setAlgoritmos(fromUser);
-						
+
 						escritor.println(fromUser);
 
 
@@ -97,7 +137,7 @@ public class Cliente extends Thread{
 				}else if (estado == 3)
 				{
 					//RECIBIR CERTIFICADO
-					
+
 					respuestaServer = lector.readLine(); 
 					System.out.println(respuestaServer);
 
@@ -108,7 +148,7 @@ public class Cliente extends Thread{
 
 						byte[] certificadoByte = DatatypeConverter.parseHexBinary(respuestaServer); 
 						X509Certificate certificadoServer =  encrip.setCertificadoServer(certificadoByte);
-					
+
 						try{
 							certificadoServer.checkValidity();
 						}catch (Exception e) {
@@ -131,7 +171,7 @@ public class Cliente extends Thread{
 
 					byte[] llaveByte = DatatypeConverter.parseHexBinary(respuestaServer);
 
-					
+
 					byte[] llaveByteRespuesta = encrip.encriptarLlaveSimetrica(llaveByte); 	
 					String llaveStringRespuesta = Encriptar.bytesToHex(llaveByteRespuesta);
 					escritor.println(llaveStringRespuesta);
@@ -156,5 +196,20 @@ public class Cliente extends Thread{
 			System.err.println("Exception: " + e.getMessage());
 			System.exit(1);
 		}
+
+	}
+
+
+	public void protocoloSinSeguridad()
+	{
+		//TODO: Protocolo sin seguridad
+
+	}
+
+	public static void main(String[] args) throws Exception
+	{
+		Cliente cliente = new Cliente("SEGURO");    
+		
+		
 	}
 }
