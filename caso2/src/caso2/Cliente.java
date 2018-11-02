@@ -11,6 +11,8 @@ import javax.crypto.Mac;
 import javax.xml.bind.DatatypeConverter;
 
 import org.bouncycastle.asn1.crmf.CertId;
+
+import uniandes.gload.core.LoadGenerator;
 public class Cliente extends Thread{
 
 	private static final String HOST = "127.0.0.1";
@@ -22,13 +24,19 @@ public class Cliente extends Thread{
 	private BufferedReader lector = null;
 	private Encriptar encrip; 
 	private BufferedReader stdIn = null;
-
+	private LoadGenerator generator; 
+	
+	
+	
 	private Monitor monitor;
 
 
 
 	public Cliente(String seguridad) throws UnknownHostException, IOException
 	{
+		
+		System.out.println("CREA");
+		
 		encrip = new Encriptar(); 
 		sock = new Socket(HOST, PUERTO);
 		escritor = new PrintWriter(sock.getOutputStream(), true);
@@ -326,7 +334,15 @@ public class Cliente extends Thread{
 
 	public static void main(String[] args) throws Exception
 	{
-		Cliente cliente = new Cliente("SEGURO");    
+		@SuppressWarnings("unused")
+		
+		
+		
+		Generator gen = new Generator(400, 20); 
+	
+		
+		
+		//Cliente cliente = new Cliente("SEGURO");    
 
 
 	}
