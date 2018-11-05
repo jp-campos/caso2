@@ -27,7 +27,9 @@ import java.util.Random;
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
 
@@ -104,7 +106,7 @@ public class Encriptar {
 
 	
 	
-
+	@SuppressWarnings("deprecation")
 	public X509Certificate getCertificado(KeyPair llaves) throws CertificateEncodingException, InvalidKeyException, IllegalStateException, NoSuchAlgorithmException, SignatureException 
 	{
 
@@ -114,12 +116,6 @@ public class Encriptar {
 
 
 
-		String algoritmoPrivada = llavePrivadaCliente.getAlgorithm(); 
-		String algoritmoPublica = llavePublicaCliente.getAlgorithm(); 
-
-		
-		System.out.println("Algoritmo privada: "+ algoritmoPrivada);
-		System.out.println("Algoritmo publica: " + algoritmoPublica);
 		String nombre = "Certificado"; 
 		BigInteger bigInt = new BigInteger(llavePublicaCliente.getEncoded().length, new SecureRandom()); 
 
@@ -178,20 +174,44 @@ public class Encriptar {
 		
 	}
 
+	
+	public byte[] encriptarConLlaveSimetrica(byte[] bytes) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException
+	{
+		
+		Cipher cipher = Cipher.getInstance(algoSimetrico); 
+		
+		cipher.init(Cipher.ENCRYPT_MODE, llaveSimetrica);
+		
+		return cipher.doFinal(bytes);
+		
+	
+	}
+	
+	
+	public byte[] hmac(byte[] bytes) throws NoSuchAlgorithmException, InvalidKeyException
+	{
+		Mac mac = Mac.getInstance(algoHmac);
+		
+		mac.init(llaveSimetrica);
+		return mac.doFinal(bytes); 
+		
+	}
+	
 	public byte[] encriptarLlaveSimetrica(byte[] bytes) throws InvalidKeySpecException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException {
 
-
+		
 		String arg1 = null, arg2 = null, arg3 = null; 
 		Cipher cipher = null;
 		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-		
+
 		if(algoSimetrico.equals("AES"))
 		{
 			arg1 = "AES";
 			arg2 = "ECB";
 			arg3 = "PKCS5Padding";
 			
-			cipher = Cipher.getInstance(arg1 + "/" + arg2 + "/" + arg3);
+			cipher = Cipher.getInstance("RSA");
+			//cipher = Cipher.getInstance(arg1 + "/" + arg2 + "/" + arg3);
 		}else if(algoSimetrico.equals("Blowfish"))
 		{
 			cipher = Cipher.getInstance("RSA");
@@ -202,18 +222,26 @@ public class Encriptar {
 		
 		
 		SecretKeySpec k = new SecretKeySpec(bytes, algoSimetrico);
-		
-		System.out.println("En Desencriptar y encriptarLlaveServer: 1 ");
+	
+		//System.out.println("En Desencriptar y encriptarLlaveServer: 1 ");
 		
 	
 		//Descriptar la que me llegó
 		
 		cipher.init(Cipher.DECRYPT_MODE, llavePrivadaCliente);
 		 
-		System.out.println("En Desencriptar y encriptarLlaveServer: 2 ");
+		//System.out.println("En Desencriptar y encriptarLlaveServer: 2 ");
 		byte[] llaveD = cipher.doFinal(bytes);
-		System.out.println("En Desencriptar y encriptarLlaveServer: 3");
+		
+		llaveSimetrica = new SecretKeySpec(llaveD, algoSimetrico);
+		
+		
+		//System.out.println("En Desencriptar y encriptarLlaveServer: 3");
 		//encriptarla con la del servidor
+		
+		
+		
+		
 		cipher.init(Cipher.ENCRYPT_MODE, llavePublicaServidor);
 		
 		

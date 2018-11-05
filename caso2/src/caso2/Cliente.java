@@ -24,7 +24,7 @@ public class Cliente extends Thread{
 	private BufferedReader lector = null;
 	private Encriptar encrip; 
 	private BufferedReader stdIn = null;
-	private LoadGenerator generator; 
+	
 	
 	
 	
@@ -125,7 +125,7 @@ public class Cliente extends Thread{
 					if(respuestaServer.equalsIgnoreCase("OK"))
 					{
 
-
+						System.out.println("Enviar Certificado");
 						X509Certificate certificado = encrip.getCertificado(encrip.getKeyPair());
 						byte[] certificadoEnBytes = certificado.getEncoded( );
 						String certificadoEnString = Encriptar.bytesToHex(certificadoEnBytes);
@@ -151,7 +151,7 @@ public class Cliente extends Thread{
 					if(respuestaServer.equalsIgnoreCase("OK"))
 					{
 						respuestaServer = lector.readLine(); 
-
+						System.out.println("Recibir certificado");
 						byte[] certificadoByte = DatatypeConverter.parseHexBinary(respuestaServer); 
 						X509Certificate certificadoServer =  encrip.setCertificadoServer(certificadoByte);
 
@@ -173,13 +173,15 @@ public class Cliente extends Thread{
 				}else if(estado == 4)
 				{
 					//Devolver la llave
+					System.out.println("Recibe llave");
 					respuestaServer = lector.readLine(); 
-
+					
 					byte[] llaveByte = DatatypeConverter.parseHexBinary(respuestaServer);
 
 
 					byte[] llaveByteRespuesta = encrip.encriptarLlaveSimetrica(llaveByte); 	
 					String llaveStringRespuesta = Encriptar.bytesToHex(llaveByteRespuesta);
+					System.out.println("Devolver llave");
 					escritor.println(llaveStringRespuesta);
 
 					estado++; 
@@ -188,9 +190,35 @@ public class Cliente extends Thread{
 				{
 					respuestaServer = lector.readLine(); 
 					System.out.println(respuestaServer);
-
-
+					
+					System.out.println("Haga la consulta");
+					fromUser= stdIn.readLine(); 
+					byte[] bytes = encrip.encriptarConLlaveSimetrica(fromUser.getBytes());
+					
+					String consulta = Encriptar.bytesToHex(bytes);
+					
+					escritor.println(consulta);
+					
+					
+				
+					byte[] bytesHmac = encrip.hmac(fromUser.getBytes());
+					
+					consulta = Encriptar.bytesToHex(bytesHmac);
+					
+					
+					escritor.println(consulta);
+					
+					respuestaServer = lector.readLine(); 
+					System.out.println(respuestaServer);
+					estado++; 
+				}else if(estado == 6)
+				{
+					ejecutar = false; 
+					
+					
 				}
+				
+				
 
 			}
 			escritor.close();
@@ -331,18 +359,16 @@ public class Cliente extends Thread{
 
 
 	}
-
+	
+	@SuppressWarnings("unused")
 	public static void main(String[] args) throws Exception
 	{
-		@SuppressWarnings("unused")
 		
-		
-		
-		Generator gen = new Generator(400, 20); 
+		//Generator gen = new Generator(400, 20); 
 	
 		
 		
-		//Cliente cliente = new Cliente("SEGURO");    
+		Cliente cliente = new Cliente("SEGURO");    
 
 
 	}
