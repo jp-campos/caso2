@@ -1,11 +1,16 @@
 package caso2;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.reflect.Array;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 
 import javax.crypto.Mac;
 import javax.xml.bind.DatatypeConverter;
@@ -18,7 +23,7 @@ public class Cliente extends Thread{
 	private static final String HOST = "127.0.0.1";
 	public static final int PUERTO = 8080;
 
-	private boolean ejecutar = true;
+	private boolean ejecutar;
 	private Socket sock = null;
 	private PrintWriter escritor = null;
 	private BufferedReader lector = null;
@@ -34,8 +39,8 @@ public class Cliente extends Thread{
 
 	public Cliente(String seguridad) throws UnknownHostException, IOException
 	{
-		
-		System.out.println("CREA");
+		ejecutar = true; 
+	
 		
 		encrip = new Encriptar(); 
 		sock = new Socket(HOST, PUERTO);
@@ -45,34 +50,23 @@ public class Cliente extends Thread{
 				new InputStreamReader(System.in));
 
 		monitor = new Monitor(); 
+	
+				
 
-		int estado = 0; 
-		while(ejecutar)
-		{
-
-			if(estado == 0)
-			{
-
-				System.out.println("Escriba NOSEGURO si quiere comunicarse con un servidor sin seguridad \n SEGURO si desea hacerlo con seguridad");
-
-				String respuesta = stdIn.readLine(); 
+				//String respuesta = stdIn.readLine(); 
 				//TODO Cambiar por el parametro despues de probar
-				if(respuesta.equals("NOSEGURO"))
-				{	
-					protocoloSinSeguridad(); 
+				if(seguridad.equals("NOSEGURO"))
+				{	System.out.println("Protocolo no seguro");
+					protocoloSinSeguridad();
 
-				}else if(respuesta.equals("SEGURO"))
+				}else if(seguridad.equals("SEGURO"))
 				{
+					System.out.println("Protocolo seguro");
 					protocoloConSeguridad();
+					
 				}
 
-			}else if (estado == 1)
-			{
-
-			}
-
-
-		}
+	//	System.out.println("SALE DEL EJECUTAR");
 	}
 
 	public void protocoloConSeguridad()
@@ -86,9 +80,9 @@ public class Cliente extends Thread{
 			while (ejecutar) {
 				//respuestaServer = lector.readLine(); 
 				if (estado == 0) {
-					System.out.print("Escriba el mensaje para enviar:");
-					fromUser = stdIn.readLine();
-					escritor.println(fromUser);
+
+					//fromUser = stdIn.readLine();
+					escritor.println("HOLA");
 
 					estado++; 
 				}else if(estado == 1 )
@@ -98,16 +92,16 @@ public class Cliente extends Thread{
 					{
 						System.out.println("OK");
 
-						System.out.print("Escriba los algoritmos para enviar:");
+						//System.out.print("Escriba los algoritmos para enviar:");
 
 						//Aqui mandar:ALGORITMOS:Blowfish:RSA:HMACMD5
 
 
-						fromUser = stdIn.readLine();
+						//fromUser = stdIn.readLine();
 
-						encrip.setAlgoritmos(fromUser);
+						encrip.setAlgoritmos("ALGORITMOS:Blowfish:RSA:HMACMD5");
 
-						escritor.println(fromUser);
+						escritor.println("ALGORITMOS:Blowfish:RSA:HMACMD5");
 
 
 
@@ -162,7 +156,7 @@ public class Cliente extends Thread{
 							e.printStackTrace();
 						}
 						escritor.println("OK");
-
+						monitor.start();
 						estado++;
 
 					}else
@@ -190,10 +184,12 @@ public class Cliente extends Thread{
 				{
 					respuestaServer = lector.readLine(); 
 					System.out.println(respuestaServer);
+					monitor.end("verificacion");
+					//Hacer la consulta
 					
 					System.out.println("Haga la consulta");
-					fromUser= stdIn.readLine(); 
-					byte[] bytes = encrip.encriptarConLlaveSimetrica(fromUser.getBytes());
+					//fromUser= stdIn.readLine(); 
+					byte[] bytes = encrip.encriptarConLlaveSimetrica("12345".getBytes());
 					
 					String consulta = Encriptar.bytesToHex(bytes);
 					
@@ -201,7 +197,7 @@ public class Cliente extends Thread{
 					
 					
 				
-					byte[] bytesHmac = encrip.hmac(fromUser.getBytes());
+					byte[] bytesHmac = encrip.hmac("12345".getBytes());
 					
 					consulta = Encriptar.bytesToHex(bytesHmac);
 					
@@ -210,9 +206,11 @@ public class Cliente extends Thread{
 					
 					respuestaServer = lector.readLine(); 
 					System.out.println(respuestaServer);
+					ejecutar = false; 
 					estado++; 
 				}else if(estado == 6)
 				{
+					System.out.println("Salir ejecutar");
 					ejecutar = false; 
 					
 					
@@ -336,8 +334,6 @@ public class Cliente extends Thread{
 
 					fromUser = stdIn.readLine();
 					escritor.println(fromUser);
-
-					fromUser = stdIn.readLine();
 					escritor.println(fromUser);
 
 					respuestaServer = lector.readLine(); 
@@ -363,12 +359,58 @@ public class Cliente extends Thread{
 	@SuppressWarnings("unused")
 	public static void main(String[] args) throws Exception
 	{
+		ArrayList<ArrayList<Long>> listas = new ArrayList<>(); 
+		for (int i = 0; i < 10; i++) {
 		
-		//Generator gen = new Generator(400, 20); 
+			
+		
+		Generator gen = new Generator(400, 20); 
+		ArrayList<Long> lista = Monitor.getTiemposVerificacion(); 
 	
+		listas.add((ArrayList<Long>)lista.clone());
+		Monitor.reiniciarArrayList();
+		}
+		String workingPath = System.getProperty("user.dir");
+		String nombreArchivoVer = "con1pool400.csv";
+		String nombreArchivoCons = "ver1pool400.csv";
 		
 		
-		Cliente cliente = new Cliente("SEGURO");    
+		
+		PrintWriter writerVerificacion = new PrintWriter(workingPath+ File.separator + "data" + File.separator + nombreArchivoVer );
+		
+		
+		writerVerificacion.println("sep=,");
+		
+		for (ArrayList<Long> arrayList : listas) {
+			
+			ArrayList<Long> datos = arrayList; 
+			StringBuilder builder = new StringBuilder(); 
+			
+			for (int i = 0; i < datos.size(); i++) {
+				if(i != datos.size()-1)
+				{
+					builder.append(datos.get(i) + ","); 
+					System.out.println("Entra " + datos.get(i));
+				}else {
+					builder.append(datos.get(i)); 
+				}
+				
+				
+			}
+			writerVerificacion.println(builder.toString());
+			
+			
+			
+		}
+		System.out.println("acaba de verificar");
+		
+		writerVerificacion.close(); 
+		
+		System.out.println("Tiempo verificacion " +Monitor.getTiemposDeVerificacionPromedio());
+		
+		//System.out.println(ClienteTask.getFallas()); 
+		
+		//Cliente cliente = new Cliente("SEGURO");    
 
 
 	}

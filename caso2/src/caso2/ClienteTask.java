@@ -7,10 +7,13 @@ import uniandes.gload.core.Task;
 
 public class ClienteTask extends Task{
 
+	
+	private static int fallas = 0; 
+	
 	@Override
 	public void fail() {
 		System.out.println(Task.MENSAJE_FAIL);
-		
+		setFallas(getFallas() + 1); 
 	}
 
 	@Override
@@ -23,7 +26,7 @@ public class ClienteTask extends Task{
 	public void execute() {
 		
 			try {
-				Cliente cliente = new Cliente("NOSEGURO");
+				Cliente cliente = new Cliente("SEGURO");
 			} catch (UnknownHostException e) {
 				
 				e.printStackTrace();
@@ -32,6 +35,14 @@ public class ClienteTask extends Task{
 				e.printStackTrace();
 			}
 		
+	}
+
+	public static int getFallas() {
+		return fallas;
+	}
+
+	public synchronized static void setFallas(int fallas) {
+		ClienteTask.fallas = fallas;
 	}
 	
 	
