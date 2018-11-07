@@ -20,7 +20,7 @@ import org.bouncycastle.asn1.crmf.CertId;
 import uniandes.gload.core.LoadGenerator;
 public class Cliente extends Thread{
 
-	private static final String HOST = "127.0.0.1";
+	private static final String HOST = "10.0.0.10";
 	public static final int PUERTO = 8080;
 
 	private boolean ejecutar;
@@ -72,7 +72,7 @@ public class Cliente extends Thread{
 	public void protocoloConSeguridad()
 	{
 		String respuestaServer;
-		String fromUser;
+
 		int estado = 0;
 
 
@@ -156,6 +156,8 @@ public class Cliente extends Thread{
 							e.printStackTrace();
 						}
 						escritor.println("OK");
+						
+						//-------------------Se comienza la medida del monitor para el tiempo de verificación ---------
 						monitor.start();
 						estado++;
 
@@ -184,6 +186,8 @@ public class Cliente extends Thread{
 				{
 					respuestaServer = lector.readLine(); 
 					System.out.println(respuestaServer);
+					
+					//-------------------Se termina la medida del monitor para el tiempo de verificación ---------
 					monitor.end("verificacion");
 					//Hacer la consulta
 					
@@ -193,12 +197,16 @@ public class Cliente extends Thread{
 					
 					String consulta = Encriptar.bytesToHex(bytes);
 					
+					
+					
+					
 					escritor.println(consulta);
+					//-------------------Se comienza la medida del monitor para el tiempo de Consulta ------------
+					monitor.start();
 					
 					
-				
+					
 					byte[] bytesHmac = encrip.hmac("12345".getBytes());
-					
 					consulta = Encriptar.bytesToHex(bytesHmac);
 					
 					
@@ -206,6 +214,11 @@ public class Cliente extends Thread{
 					
 					respuestaServer = lector.readLine(); 
 					System.out.println(respuestaServer);
+					
+					//-------------------Termina la medida del monitor para el tiempo de Consulta ------------
+					monitor.endConsu();
+					
+					
 					ejecutar = false; 
 					estado++; 
 				}else if(estado == 6)
@@ -359,52 +372,90 @@ public class Cliente extends Thread{
 	@SuppressWarnings("unused")
 	public static void main(String[] args) throws Exception
 	{
-		ArrayList<ArrayList<Long>> listas = new ArrayList<>(); 
+		ArrayList<ArrayList<Long>> listasVer = new ArrayList<>();
+		ArrayList<ArrayList<Long>> listasConsul = new ArrayList<>();
+		
 		for (int i = 0; i < 10; i++) {
 		
 			
 		
 		Generator gen = new Generator(400, 20); 
-		ArrayList<Long> lista = Monitor.getTiemposVerificacion(); 
-	
-		listas.add((ArrayList<Long>)lista.clone());
-		Monitor.reiniciarArrayList();
+		ArrayList<Long> listaVer = Monitor.getTiemposVerificacion(); 
+		ArrayList<Long> listaConsul = Monitor.getTiemposConsulta();
+		
+		listasVer.add((ArrayList<Long>)listaVer.clone());
+		listasConsul.add((ArrayList<Long>)listaConsul.clone());
+		
+		Monitor.reiniciarArrayListVer();
+		Monitor.reiniciarArrayListConsu();
 		}
 		String workingPath = System.getProperty("user.dir");
-		String nombreArchivoVer = "con1pool400.csv";
-		String nombreArchivoCons = "ver1pool400.csv";
+		
+		
+		/*	seg-noseg-carga-#pools
+		 * 	Ej: 400-1 para una carga de 400 y 1 pool en el servidor 
+		*/
+		String pruebaActual ="seg-400-1";
+		
+		//con|ver-carga-#pools
+		String nombreArchivoVer = "ver-" + pruebaActual+ ".csv";
+		String nombreArchivoConsul = "consul-" + pruebaActual + ".csv";
 		
 		
 		
 		PrintWriter writerVerificacion = new PrintWriter(workingPath+ File.separator + "data" + File.separator + nombreArchivoVer );
-		
+		PrintWriter writerConsul = new PrintWriter(workingPath+ File.separator + "data" + File.separator + nombreArchivoConsul );
 		
 		writerVerificacion.println("sep=,");
+		writerConsul.println("sep=,");
 		
-		for (ArrayList<Long> arrayList : listas) {
+		//Imprime la información
+		for (ArrayList<Long> arrayList : listasVer) {
 			
 			ArrayList<Long> datos = arrayList; 
-			StringBuilder builder = new StringBuilder(); 
+			StringBuilder builderVer = new StringBuilder(); 
+			
+			StringBuilder builder2 = new StringBuilder(); 
 			
 			for (int i = 0; i < datos.size(); i++) {
 				if(i != datos.size()-1)
 				{
-					builder.append(datos.get(i) + ","); 
+					builderVer.append(datos.get(i) + ","); 
 					System.out.println("Entra " + datos.get(i));
 				}else {
-					builder.append(datos.get(i)); 
+					builderVer.append(datos.get(i)); 
 				}
-				
-				
 			}
-			writerVerificacion.println(builder.toString());
 			
+	
+		for (ArrayList<Long> arrayList2 : listasConsul) {
+			
+			
+			ArrayList<Long> datos2 = arrayList2;
+			
+			for (int i = 0; i < datos2.size(); i++) {
+				if(i != datos2.size()-1)
+				{
+					builder2.append(datos2.get(i) + ","); 
+					System.out.println("Entra " + datos2.get(i));
+				}else {
+					builder2.append(datos2.get(i)); 
+				}
+			}	
+			
+		}
+	
+			
+			writerVerificacion.println(builderVer.toString());
+			System.out.println(builder2.toString());
+			writerConsul.println(builder2.toString());
 			
 			
 		}
 		System.out.println("acaba de verificar");
 		
 		writerVerificacion.close(); 
+		writerConsul.close();
 		
 		System.out.println("Tiempo verificacion " +Monitor.getTiemposDeVerificacionPromedio());
 		

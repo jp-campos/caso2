@@ -13,7 +13,7 @@ public class Monitor {
 	
 	
 	
-	private long start; 
+	private long startVer; 
 	
 	
 	private static ArrayList<Long> tiemposVerificacion = new ArrayList<>();
@@ -25,31 +25,49 @@ public class Monitor {
 	
 	public void start()
 	{
-		start = System.currentTimeMillis(); 
+		startVer = System.currentTimeMillis(); 
+		System.out.println("Tiempo start " + startVer);
 		
 	}
 	
 	
-	public synchronized long end(String tipo)
-	{
-		long fin = System.currentTimeMillis(); 
+	public long end(String tipo)
+	{	
 		
-		long resta = fin-start; 
-		if(tipo.equals("verificacion"))
-		{
-			tiemposVerificacion.add(resta);
-		}else {
+		long fin = System.currentTimeMillis(); 
+		long resta = fin-startVer; 
+		
+		System.out.println("Tiempo fin ver "+ resta);
+		synchronized (this) {
 			
-			tiemposConsulta.add(resta);
+			
+			if(tipo.equals("verificacion"))
+			{
+				tiemposVerificacion.add(resta);
+			}else {
+				
+				tiemposConsulta.add(resta);
+			}
+			
 		}
 		
-		
-		 
-		
-		return fin - start; 
+		return fin - startVer; 
 	}
 	
-	
+	public long endConsu()
+	{	
+		
+		long fin = System.currentTimeMillis(); 
+
+		long resta = fin-startVer; 
+		
+		System.out.println("Tiempo fin consul+*- "+ resta);
+		synchronized (this) {
+				tiemposConsulta.add(resta);
+		}
+		
+		return fin - startVer; 
+	}
 	
 	public double getSystemCpuLoad() throws Exception {
 		
@@ -91,13 +109,22 @@ public class Monitor {
 	{
 		return tiemposVerificacion; 
 	}
+	public static ArrayList<Long> getTiemposConsulta()
+	{
+		return tiemposConsulta; 
+	}
 	
-	public static void reiniciarArrayList()
+	public static void reiniciarArrayListVer()
 	{
 		tiemposVerificacion.clear(); 
 	}
 	
-	public static double getTiemposDeConsultanPromedio()
+	public static void reiniciarArrayListConsu()
+	{
+		tiemposConsulta.clear(); 
+	}
+	
+	public static double getTiemposDeConsultaPromedio()
 	{
 		double suma = 0L; 
 		
