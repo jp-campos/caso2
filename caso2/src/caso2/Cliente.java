@@ -21,7 +21,7 @@ import org.bouncycastle.asn1.crmf.CertId;
 import uniandes.gload.core.LoadGenerator;
 public class Cliente extends Thread{
 
-	private static final String HOST = "127.0.0.1";
+	private static final String HOST = "157.253.224.80";
 	public static final int PUERTO = 8080;
 
 	
@@ -101,7 +101,7 @@ public class Cliente extends Thread{
 		String respuestaServer;
 
 		int estado = 0;
-
+		System.out.println("Entra al protocolo");
 
 		try{
 			while (ejecutar) {
@@ -215,12 +215,18 @@ public class Cliente extends Thread{
 					System.out.println(respuestaServer);
 					
 					//-------------------Se termina la medida del monitor para el tiempo de verificación ---------
-					monitor.end("verificacion");
+					monitor.endVer();
+					
 					//Hacer la consulta
 					
 					System.out.println("Haga la consulta");
 					//fromUser= stdIn.readLine(); 
-					byte[] bytes = encrip.encriptarConLlaveSimetrica("12345".getBytes());
+					
+					
+					
+					String consultaNumeros = "12345"; 
+					
+					byte[] bytes = encrip.encriptarConLlaveSimetrica(consultaNumeros.getBytes());
 					
 					String consulta = Encriptar.bytesToHex(bytes);
 					
@@ -228,21 +234,26 @@ public class Cliente extends Thread{
 					
 					
 					escritor.println(consulta);
-					//-------------------Se comienza la medida del monitor para el tiempo de Consulta ------------
-					monitor.start();
 					
 					
 					
-					byte[] bytesHmac = encrip.hmac("12345".getBytes());
+					
+					byte[] bytesHmac = encrip.hmac(consultaNumeros.getBytes());
 					consulta = Encriptar.bytesToHex(bytesHmac);
 					
 					
 					escritor.println(consulta);
+					//-------------------Se comienza la medida del monitor para el tiempo de Consulta ------------
+					monitor.start();
+					
 					
 					respuestaServer = lector.readLine(); 
 					System.out.println(respuestaServer);
 					
+					
+					
 					//-------------------Termina la medida del monitor para el tiempo de Consulta ------------
+					if(respuestaServer!= null)
 					monitor.endConsu();
 					
 					
@@ -394,6 +405,8 @@ public class Cliente extends Thread{
 	@SuppressWarnings("unused")
 	public static void main(String[] args) throws Exception
 	{
+		
+		
 		ArrayList<ArrayList<Long>> listasVer = new ArrayList<>();
 		ArrayList<ArrayList<Long>> listasConsul = new ArrayList<>();
 		
