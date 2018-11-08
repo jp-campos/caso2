@@ -13,6 +13,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 
 import javax.crypto.Mac;
+import javax.management.ServiceNotFoundException;
 import javax.xml.bind.DatatypeConverter;
 
 import org.bouncycastle.asn1.crmf.CertId;
@@ -20,9 +21,35 @@ import org.bouncycastle.asn1.crmf.CertId;
 import uniandes.gload.core.LoadGenerator;
 public class Cliente extends Thread{
 
-	private static final String HOST = "10.0.0.10";
+	private static final String HOST = "127.0.0.1";
 	public static final int PUERTO = 8080;
 
+	
+	/*
+	 * Las pruebas van
+	 * 400 carga 20 retardo
+	 * 200 carga 40 retardo
+	 * 80 carga 100 retardo 
+	 */
+	public static int NUMERO_CARGA = 400; 
+	public static int RETRASO= 20; 
+	
+	
+	/*
+	 *Modificar en el servidor también 
+	 */
+	public static int NUMERO_THREADS = 1; 
+	
+	/*
+	 * Probar con SEGURO cambiar a NOSEGURO
+	 * SEGURO 
+	 * NOSEGURO
+	 */
+	public static String SEGURIDAD  = "SEGURO"; 
+	
+	
+	
+	
 	private boolean ejecutar;
 	private Socket sock = null;
 	private PrintWriter escritor = null;
@@ -248,7 +275,7 @@ public class Cliente extends Thread{
 	public void protocoloSinSeguridad()
 	{
 		String respuestaServer;
-		String fromUser;
+		
 		int estado = 0;
 
 
@@ -257,13 +284,10 @@ public class Cliente extends Thread{
 				//respuestaServer = lector.readLine(); 
 				if (estado == 0) {
 					System.out.print("Escriba el mensaje para enviar:");
-					fromUser = stdIn.readLine();
-					if(fromUser.equals("HOLA")){
-						escritor.println(fromUser);
-					}else{
-						System.out.println("No va de acuerdo con el protocolo");
-						ejecutar = false;
-					}
+				
+					
+						escritor.println("HOLA");
+					
 					estado++; 
 				}else if(estado == 1 )
 				{
@@ -277,9 +301,7 @@ public class Cliente extends Thread{
 						//Aqui mandar:ALGORITMOS:Blowfish:RSA:HMACMD5
 
 
-						fromUser = stdIn.readLine();
-
-						escritor.println(fromUser);
+						escritor.println("ALGORITMOS:Blowfish:RSA:HMACMD5");
 
 
 
@@ -345,9 +367,9 @@ public class Cliente extends Thread{
 					System.out.println(respuestaServer);
 					System.out.println("Haga la consulta");
 
-					fromUser = stdIn.readLine();
-					escritor.println(fromUser);
-					escritor.println(fromUser);
+					
+					escritor.println("1234");
+					escritor.println("1234");
 
 					respuestaServer = lector.readLine(); 
 					System.out.println(respuestaServer);
@@ -379,7 +401,7 @@ public class Cliente extends Thread{
 		
 			
 		
-		Generator gen = new Generator(400, 20); 
+		Generator gen = new Generator( Cliente.NUMERO_CARGA, Cliente.RETRASO); 
 		ArrayList<Long> listaVer = Monitor.getTiemposVerificacion(); 
 		ArrayList<Long> listaConsul = Monitor.getTiemposConsulta();
 		
@@ -392,12 +414,12 @@ public class Cliente extends Thread{
 		String workingPath = System.getProperty("user.dir");
 		
 		
-		/*	seg-noseg-carga-#pools
-		 * 	Ej: 400-1 para una carga de 400 y 1 pool en el servidor 
+		/*	SEGURO|NOSEGURO-carga-#threads
+		 * 
 		*/
-		String pruebaActual ="seg-400-1";
+		String pruebaActual = Cliente.SEGURIDAD + "-" + Cliente.NUMERO_CARGA + "-" + Cliente.NUMERO_THREADS;
 		
-		//con|ver-carga-#pools
+		
 		String nombreArchivoVer = "ver-" + pruebaActual+ ".csv";
 		String nombreArchivoConsul = "consul-" + pruebaActual + ".csv";
 		
@@ -415,7 +437,7 @@ public class Cliente extends Thread{
 			ArrayList<Long> datos = arrayList; 
 			StringBuilder builderVer = new StringBuilder(); 
 			
-			StringBuilder builder2 = new StringBuilder(); 
+			
 			
 			for (int i = 0; i < datos.size(); i++) {
 				if(i != datos.size()-1)
@@ -428,9 +450,17 @@ public class Cliente extends Thread{
 			}
 			
 	
+		
+			
+			writerVerificacion.println(builderVer.toString());
+			
+			
+			
+			
+		}
 		for (ArrayList<Long> arrayList2 : listasConsul) {
 			
-			
+			StringBuilder builder2 = new StringBuilder(); 
 			ArrayList<Long> datos2 = arrayList2;
 			
 			for (int i = 0; i < datos2.size(); i++) {
@@ -441,17 +471,11 @@ public class Cliente extends Thread{
 				}else {
 					builder2.append(datos2.get(i)); 
 				}
+				
 			}	
-			
+			writerConsul.println(builder2.toString());
 		}
 	
-			
-			writerVerificacion.println(builderVer.toString());
-			System.out.println(builder2.toString());
-			writerConsul.println(builder2.toString());
-			
-			
-		}
 		System.out.println("acaba de verificar");
 		
 		writerVerificacion.close(); 

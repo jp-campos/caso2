@@ -26,7 +26,7 @@ public class ClienteTask extends Task{
 	public void execute() {
 		
 			try {
-				Cliente cliente = new Cliente("SEGURO");
+				Cliente cliente = new Cliente(Cliente.SEGURIDAD);
 			} catch (UnknownHostException e) {
 				
 				e.printStackTrace();

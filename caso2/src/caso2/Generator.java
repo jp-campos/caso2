@@ -16,7 +16,6 @@ public class Generator {
 		Task work = createTask();
 	
 		generator = new LoadGenerator("Cliente-Server" , numberTasks, work, gapBetween); 
-	
 		generator.generate();
 	}
 	

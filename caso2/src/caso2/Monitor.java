@@ -8,7 +8,7 @@ import javax.management.AttributeList;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-public class Monitor {
+public class Monitor extends Thread{
 
 	
 	
@@ -21,7 +21,16 @@ public class Monitor {
 	
 	private double memoria;
 	
+	private boolean terminado;
+
+	private String caso;
 	
+	
+	public void termino(String pCaso) {
+		terminado = true; 
+		caso= pCaso;
+		
+	}
 	
 	public void start()
 	{
@@ -67,6 +76,18 @@ public class Monitor {
 		}
 		
 		return fin - startVer; 
+	}
+	
+	
+	public synchronized void addConsulta(long consulta)
+	{
+		tiemposConsulta.add(consulta);
+	}
+	
+	
+	public synchronized void addVer(long ver)
+	{
+		tiemposVerificacion.add(ver);
 	}
 	
 	public double getSystemCpuLoad() throws Exception {
@@ -136,6 +157,30 @@ public class Monitor {
 		
 	}
 	
+	
+	@Override
+	public void run()
+	{
+		long start = System.currentTimeMillis(); 
+		terminado = false; 
+		
+		while(!terminado)
+		{
+			
+		}
+		long fin = System.currentTimeMillis();
+		
+		long resta = fin-start;
+		
+		if(caso.equals("verificacion"))
+		{
+			addVer(resta);
+		}else if(caso.equals("consulta")) {
+			addConsulta(resta);
+		}
+		
+		
+	}
 	
 	
 }
