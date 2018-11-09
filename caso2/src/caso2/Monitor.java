@@ -8,12 +8,13 @@ import javax.management.AttributeList;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-public class Monitor{
+public class Monitor extends Thread{
 
 	
 	
 	
 	private long startVer; 
+	private long startConsu; 
 	
 	
 	private static ArrayList<Long> tiemposVerificacion = new ArrayList<>();
@@ -26,13 +27,20 @@ public class Monitor{
 	private String caso;
 	
 	
+	
+	public Monitor(String pCaso)
+	{
+		this.caso = pCaso;
+		terminado = false; 
+	}
+	
 	public void termino(String pCaso) {
 		terminado = true; 
 		caso= pCaso;
 		
 	}
 	
-	public void start()
+	public void comenzar()
 	{
 		startVer = System.currentTimeMillis(); 
 		System.out.println("Tiempo start " + startVer);
@@ -153,30 +161,41 @@ public class Monitor{
 	}
 	
 	
-//	@Override
-//	public void run()
-//	{
-//		long start = System.currentTimeMillis(); 
-//		terminado = false; 
-//		
-//		while(!terminado)
-//		{
-//			
-//		}
-//		
-//		long fin = System.currentTimeMillis();
-//		
-//		long resta = fin-start;
-//		
-//		if(caso.equals("verificacion"))
-//		{
-//			addVer(resta);
-//		}else if(caso.equals("consulta")) {
-//			addConsulta(resta);
-//		}
+	
+	public boolean getTermino()
+	{
+		return terminado; 
+	}
+	@Override
+	public void run()
+	{
+		long start = System.currentTimeMillis(); 
+		System.out.println("start " + caso +  "= " + start);
+		try {
+			synchronized (this) {
+				
+				wait();
+				System.out.println(caso + " after wait");
+			}
+			
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} 
+		long fin = System.currentTimeMillis();
+		System.out.println("fin " + caso + "= " + fin );
+		long resta = fin-start;
+		System.out.println("RESTA "+ caso + "= " + resta );
 		
+		if(caso.equals("verificacion"))
+		{
+			addVer(resta);
+		}else if(caso.equals("consulta")) {
+			addConsulta(resta);
+		}
 		
-	//}
+		terminado = true; 
+	}
 	
 	
 }

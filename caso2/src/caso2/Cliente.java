@@ -9,10 +9,18 @@ import java.io.PrintWriter;
 import java.lang.reflect.Array;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SignatureException;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
+import java.security.spec.InvalidKeySpecException;
 import java.util.ArrayList;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.Mac;
+import javax.crypto.NoSuchPaddingException;
 import javax.management.ServiceNotFoundException;
 import javax.xml.bind.DatatypeConverter;
 
@@ -21,18 +29,16 @@ import org.bouncycastle.asn1.crmf.CertId;
 import uniandes.gload.core.LoadGenerator;
 public class Cliente extends Thread{
 
-	private static final String HOST = "157.253.224.80";
-	public static final int PUERTO = 8080;
-
-	
+	private static final String HOST = "127.0.0.1";
+	public static final int PUERTO = 8080;	
 	/*
 	 * Las pruebas van
 	 * 400 carga 20 retardo
 	 * 200 carga 40 retardo
 	 * 80 carga 100 retardo 
 	 */
-	public static int NUMERO_CARGA = 400; 
-	public static int RETRASO= 20; 
+	public static int NUMERO_CARGA = 80; 
+	public static int RETRASO= 100; 
 	
 	
 	/*
@@ -60,11 +66,11 @@ public class Cliente extends Thread{
 	
 	
 	
-	private Monitor monitor;
+	private Monitor monitor1;
+	private Monitor monitor2; 
 
 
-
-	public Cliente(String seguridad) throws UnknownHostException, IOException
+	public Cliente(String seguridad) throws UnknownHostException, IOException, CertificateEncodingException, InvalidKeyException, IllegalStateException, NoSuchAlgorithmException, SignatureException, InvalidKeySpecException, IllegalBlockSizeException, BadPaddingException, NoSuchPaddingException
 	{
 		ejecutar = true; 
 	
@@ -76,7 +82,8 @@ public class Cliente extends Thread{
 		stdIn = new BufferedReader(
 				new InputStreamReader(System.in));
 
-		monitor = new Monitor(); 
+		monitor1 = new Monitor("verificacion"); 
+		monitor2 = new Monitor("consulta"); 
 	
 				
 
@@ -96,14 +103,26 @@ public class Cliente extends Thread{
 	//	System.out.println("SALE DEL EJECUTAR");
 	}
 
-	public void protocoloConSeguridad()
+	/**
+	 * @throws IOException
+	 * @throws CertificateEncodingException
+	 * @throws InvalidKeyException
+	 * @throws IllegalStateException
+	 * @throws NoSuchAlgorithmException
+	 * @throws SignatureException
+	 * @throws InvalidKeySpecException
+	 * @throws IllegalBlockSizeException
+	 * @throws BadPaddingException
+	 * @throws NoSuchPaddingException
+	 */
+	public void protocoloConSeguridad() throws IOException, CertificateEncodingException, InvalidKeyException, IllegalStateException, NoSuchAlgorithmException, SignatureException, InvalidKeySpecException, IllegalBlockSizeException, BadPaddingException, NoSuchPaddingException
 	{
 		String respuestaServer;
 
 		int estado = 0;
 		System.out.println("Entra al protocolo");
 
-		try{
+		
 			while (ejecutar) {
 				//respuestaServer = lector.readLine(); 
 				if (estado == 0) {
@@ -185,7 +204,7 @@ public class Cliente extends Thread{
 						escritor.println("OK");
 						
 						//-------------------Se comienza la medida del monitor para el tiempo de verificación ---------
-						monitor.start();
+						monitor1.start();
 						estado++;
 
 					}else
@@ -215,7 +234,11 @@ public class Cliente extends Thread{
 					System.out.println(respuestaServer);
 					
 					//-------------------Se termina la medida del monitor para el tiempo de verificación ---------
-					monitor.endVer();
+					
+					synchronized (monitor1) {
+						monitor1.notify();
+					}
+					
 					
 					//Hacer la consulta
 					
@@ -229,39 +252,58 @@ public class Cliente extends Thread{
 					byte[] bytes = encrip.encriptarConLlaveSimetrica(consultaNumeros.getBytes());
 					
 					String consulta = Encriptar.bytesToHex(bytes);
-					
-					
-					
-					
+			
 					escritor.println(consulta);
-					
-					
-					
-					
 					byte[] bytesHmac = encrip.hmac(consultaNumeros.getBytes());
 					consulta = Encriptar.bytesToHex(bytesHmac);
-					
-					
 					escritor.println(consulta);
-					//-------------------Se comienza la medida del monitor para el tiempo de Consulta ------------
-					monitor.start();
+					//-------------------Comienza la medida del monitor para el tiempo de Consulta ------------
+					monitor2.start();
+					estado ++;
+					
+				}
+					else if(estado == 6)
+					{
+					
 					
 					
 					respuestaServer = lector.readLine(); 
-					System.out.println(respuestaServer);
+					System.out.println("Respuesta Server " + respuestaServer);
 					
 					
 					
 					//-------------------Termina la medida del monitor para el tiempo de Consulta ------------
-					if(respuestaServer!= null)
-					monitor.endConsu();
+						synchronized (monitor2) {
+							System.out.println("Se supone que notifica");
+							monitor2.notifyAll();
+					
+						}
 					
 					
-					ejecutar = false; 
-					estado++; 
-				}else if(estado == 6)
+					//System.out.println(monitor2.isAlive());
+					
+					int i = 0; 	
+					while(monitor2.isAlive())
+					{	
+						
+						synchronized (monitor2) {
+							//System.out.println("Se supone que notifica 2");
+							monitor2.notifyAll();
+					
+						}
+						
+						
+					}
+					
+					if(respuestaServer.equals("OK:DEBE")||respuestaServer.equals("OK:PAZYSALVO"))
+					{
+						estado++; 
+					}
+					
+				}else if(estado == 7)
 				{
-					System.out.println("Salir ejecutar");
+					
+					
 					ejecutar = false; 
 					
 					
@@ -275,22 +317,19 @@ public class Cliente extends Thread{
 			// cierre el socket y la entrada estándar
 			stdIn.close();
 			sock.close();
-		} catch (Exception e) {
-			System.err.println("Exception: " + e.getMessage());
-			System.exit(1);
-		}
+		
 
 	}
 
 
-	public void protocoloSinSeguridad()
+	public void protocoloSinSeguridad() throws IOException
 	{
 		String respuestaServer;
 		
 		int estado = 0;
 
 
-		try{
+		
 			while (ejecutar) {
 				//respuestaServer = lector.readLine(); 
 				if (estado == 0) {
@@ -394,10 +433,7 @@ public class Cliente extends Thread{
 			// cierre el socket y la entrada estándar
 			stdIn.close();
 			sock.close();
-		} catch (Exception e) {
-			System.err.println("Exception: " + e.getMessage());
-			System.exit(1);
-		}
+		
 
 
 	}
@@ -405,6 +441,9 @@ public class Cliente extends Thread{
 	@SuppressWarnings("unused")
 	public static void main(String[] args) throws Exception
 	{
+		
+		
+		//Cliente c = new Cliente("SEGURO"); 
 		
 		
 		ArrayList<ArrayList<Long>> listasVer = new ArrayList<>();
@@ -436,11 +475,15 @@ public class Cliente extends Thread{
 		String nombreArchivoVer = "ver-" + pruebaActual+ ".csv";
 		String nombreArchivoConsul = "consul-" + pruebaActual + ".csv";
 		
-		
-		
-		PrintWriter writerVerificacion = new PrintWriter(workingPath+ File.separator + "data" + File.separator + nombreArchivoVer );
-		PrintWriter writerConsul = new PrintWriter(workingPath+ File.separator + "data" + File.separator + nombreArchivoConsul );
-		
+		PrintWriter writerVerificacion =null;
+		PrintWriter writerConsul = null; 
+		try {
+		writerVerificacion = new PrintWriter(workingPath+ File.separator + "data" + File.separator + nombreArchivoVer );
+		 writerConsul = new PrintWriter(workingPath+ File.separator + "data" + File.separator + nombreArchivoConsul );
+		}catch(Exception e )
+		{
+			
+		}
 		writerVerificacion.println("sep=,");
 		writerConsul.println("sep=,");
 		
@@ -496,9 +539,7 @@ public class Cliente extends Thread{
 		
 		System.out.println("Tiempo verificacion " +Monitor.getTiemposDeVerificacionPromedio());
 		
-		//System.out.println(ClienteTask.getFallas()); 
 		
-		//Cliente cliente = new Cliente("SEGURO");    
 
 
 	}
