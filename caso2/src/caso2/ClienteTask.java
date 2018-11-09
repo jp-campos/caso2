@@ -38,31 +38,31 @@ public class ClienteTask extends Task{
 				try {
 					Cliente cliente = new Cliente(Cliente.SEGURIDAD);
 				} catch (CertificateEncodingException e) {
-					// TODO Auto-generated catch block
+					
 					e.printStackTrace();
 				} catch (InvalidKeyException e) {
-					// TODO Auto-generated catch block
+				
 					e.printStackTrace();
 				} catch (IllegalStateException e) {
-					// TODO Auto-generated catch block
+					
 					e.printStackTrace();
 				} catch (NoSuchAlgorithmException e) {
-					// TODO Auto-generated catch block
+					
 					e.printStackTrace();
 				} catch (SignatureException e) {
-					// TODO Auto-generated catch block
+					
 					e.printStackTrace();
 				} catch (InvalidKeySpecException e) {
-					// TODO Auto-generated catch block
+					
 					e.printStackTrace();
 				} catch (IllegalBlockSizeException e) {
-					// TODO Auto-generated catch block
+					
 					e.printStackTrace();
 				} catch (BadPaddingException e) {
-					// TODO Auto-generated catch block
+					
 					e.printStackTrace();
 				} catch (NoSuchPaddingException e) {
-					// TODO Auto-generated catch block
+					
 					e.printStackTrace();
 				}
 			} catch (UnknownHostException e) {

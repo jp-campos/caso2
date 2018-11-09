@@ -37,8 +37,8 @@ public class Cliente extends Thread{
 	 * 200 carga 40 retardo
 	 * 80 carga 100 retardo 
 	 */
-	public static int NUMERO_CARGA = 80; 
-	public static int RETRASO= 100; 
+	public static int NUMERO_CARGA = 400; 
+	public static int RETRASO= 20; 
 	
 	
 	/*
@@ -235,6 +235,12 @@ public class Cliente extends Thread{
 					
 					//-------------------Se termina la medida del monitor para el tiempo de verificación ---------
 					
+					try {
+						Thread.sleep(10);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					
 					synchronized (monitor1) {
 						monitor1.notify();
 					}
@@ -273,18 +279,15 @@ public class Cliente extends Thread{
 					
 					
 					//-------------------Termina la medida del monitor para el tiempo de Consulta ------------
-						synchronized (monitor2) {
-							System.out.println("Se supone que notifica");
-							monitor2.notifyAll();
-					
-						}
 					
 					
 					//System.out.println(monitor2.isAlive());
 					
-					int i = 0; 	
-					while(monitor2.isAlive())
-					{	
+						try {
+							Thread.sleep(10);
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
 						
 						synchronized (monitor2) {
 							//System.out.println("Se supone que notifica 2");
@@ -293,7 +296,7 @@ public class Cliente extends Thread{
 						}
 						
 						
-					}
+					
 					
 					if(respuestaServer.equals("OK:DEBE")||respuestaServer.equals("OK:PAZYSALVO"))
 					{

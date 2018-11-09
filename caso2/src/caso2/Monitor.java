@@ -182,7 +182,7 @@ public class Monitor extends Thread{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 
-		long fin = System.currentTimeMillis();
+		long fin = System.currentTimeMillis() - 10;
 		System.out.println("fin " + caso + "= " + fin );
 		long resta = fin-start;
 		System.out.println("RESTA "+ caso + "= " + resta );
