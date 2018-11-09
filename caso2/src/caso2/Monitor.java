@@ -128,6 +128,16 @@ public class Monitor extends Thread{
 		
 	}
 	
+	public synchronized static void addTiemposVerificacion(long valor)
+	{
+		tiemposVerificacion.add(valor); 
+	}
+	
+	public synchronized static void addTiemposConsulta(long valor)
+	{
+		tiemposConsulta.add(valor); 
+	}
+	
 	
 	public static ArrayList<Long> getTiemposVerificacion()
 	{

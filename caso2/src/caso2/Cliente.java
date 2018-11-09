@@ -37,8 +37,8 @@ public class Cliente extends Thread{
 	 * 200 carga 40 retardo
 	 * 80 carga 100 retardo 
 	 */
-	public static int NUMERO_CARGA = 400; 
-	public static int RETRASO= 20; 
+	public static int NUMERO_CARGA = 80; 
+	public static int RETRASO= 100; 
 	
 	
 	/*
@@ -51,7 +51,7 @@ public class Cliente extends Thread{
 	 * SEGURO 
 	 * NOSEGURO
 	 */
-	public static String SEGURIDAD  = "SEGURO"; 
+	public static String SEGURIDAD  = "NOSEGURO"; 
 	
 	
 	
@@ -128,6 +128,7 @@ public class Cliente extends Thread{
 				if (estado == 0) {
 
 					//fromUser = stdIn.readLine();
+					escritor.println(NUMERO_CARGA);
 					escritor.println("HOLA");
 
 					estado++; 
@@ -258,13 +259,17 @@ public class Cliente extends Thread{
 					byte[] bytes = encrip.encriptarConLlaveSimetrica(consultaNumeros.getBytes());
 					
 					String consulta = Encriptar.bytesToHex(bytes);
-			
-					escritor.println(consulta);
+					
 					byte[] bytesHmac = encrip.hmac(consultaNumeros.getBytes());
-					consulta = Encriptar.bytesToHex(bytesHmac);
+					String consulta2 = Encriptar.bytesToHex(bytesHmac);
+			
 					escritor.println(consulta);
 					//-------------------Comienza la medida del monitor para el tiempo de Consulta ------------
 					monitor2.start();
+					
+					
+					escritor.println(consulta2);
+					
 					estado ++;
 					
 				}
@@ -278,10 +283,8 @@ public class Cliente extends Thread{
 					
 					
 					
-					//-------------------Termina la medida del monitor para el tiempo de Consulta ------------
-					
-					
-					//System.out.println(monitor2.isAlive());
+					//-------------------Termina la medida del monitor para el tiempo de Consulta -----------
+				
 					
 						try {
 							Thread.sleep(10);
@@ -324,21 +327,24 @@ public class Cliente extends Thread{
 
 	}
 
-
+	/*
+	 * El protocolo sin seguridad corre más rápido entonces es mejor hacerlo directamente
+	 * @throws IOException
+	 */
 	public void protocoloSinSeguridad() throws IOException
 	{
 		String respuestaServer;
 		
 		int estado = 0;
 
-
+		long startVer= 0; 
 		
 			while (ejecutar) {
 				//respuestaServer = lector.readLine(); 
 				if (estado == 0) {
 					System.out.print("Escriba el mensaje para enviar:");
 				
-					
+						escritor.println(NUMERO_CARGA);
 						escritor.println("HOLA");
 					
 					estado++; 
@@ -397,6 +403,9 @@ public class Cliente extends Thread{
 						System.out.println("Recibir certificado servidor");
 
 						escritor.println("OK");
+						//-------------------Se comienza la medida del monitor para el tiempo de verificación ---------
+						startVer = System.currentTimeMillis(); 
+						
 						
 						estado++;
 
@@ -408,7 +417,7 @@ public class Cliente extends Thread{
 				}else if(estado == 4)
 				{
 					//Devolver la llave
-					System.out.println("Dolver la llave");
+					System.out.println("Devolver la llave");
 					respuestaServer = lector.readLine(); 
 					escritor.println(respuestaServer);
 
@@ -418,14 +427,34 @@ public class Cliente extends Thread{
 				{
 					respuestaServer = lector.readLine(); 
 					System.out.println(respuestaServer);
+					
+					//-------------------Se finaliza la medida del monitor para el tiempo de verificación ---------
+					long fin1 = System.currentTimeMillis(); 
+					long resta1 = fin1 - startVer; 
+					
+					Monitor.addTiemposVerificacion(resta1);
+					
+					
+					
+					
 					System.out.println("Haga la consulta");
 
 					
 					escritor.println("1234");
+					//-------------------Se comienza la medida del monitor para el tiempo de verificación ---------
+					long start = System.currentTimeMillis(); 
+					
 					escritor.println("1234");
 
 					respuestaServer = lector.readLine(); 
 					System.out.println(respuestaServer);
+					
+					//-------------------Termina la medida del monitor para el tiempo de verificación ---------
+					long fin = System.currentTimeMillis(); 
+					
+					long resta = fin-start; 
+					
+					Monitor.addTiemposConsulta(resta);
 
 					ejecutar= false;
 				}
